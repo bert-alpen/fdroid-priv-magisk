@@ -1,0 +1,65 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      fdroid_org_version:
+        description: 'Numerical release version on fdroid.org'
+        required: true
+        default: '2110'
+      semantic_version:
+        description: 'Semantic release version'
+        required: true
+        default: '0.2.11'
+      package_version_code:
+        description: 'Version code of the Magisk package'
+        required: false
+        default: '1'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+
+      # Runs a single command using the runners shell
+      - name: Update meta data
+        run: |
+          SEMANTIC_VERSION=${{ github.event.inputs.semantic_version }}
+          VERSION_CODE=${{ github.event.inputs.package_version_code }}
+          FDROID_ORG_VERSION=${{ github.event.inputs.fdroid_org_version }}
+          
+          sed -i "s/VERSION_CODE/${VERSION_CODE}/g" module.prop
+          sed -i "s/SEMANTIC_VERSION/${SEMANTIC_VERSION}/g" module.prop
+          
+          sed -i "s/VERSION_CODE/${VERSION_CODE}/g" update.json
+          sed -i "s/FDROID_ORG_VERSION/${FDROID_ORG_VERSION}/g" update.json
+
+          sed -i "s/VERSION_CODE/${VERSION_CODE}/g" changelog.md
+          sed -i "s/FDROID_ORG_VERSION/${FDROID_ORG_VERSION}/g" changelog.md
+          
+          sed -i "s/SEMANTIC_VERSION/${SEMANTIC_VERSION}/g" customize.sh
+          sed -i "s/FDROID_ORG_VERSION/${FDROID_ORG_VERSION}/g" customize.sh
+          
+      # Runs a set of commands using the runners shell
+      - name: Create zip package
+        run: |
+          SEMANTIC_VERSION=${{ github.event.inputs.semantic_version }}
+          FDROID_ORG_VERSION=${{ github.event.inputs.fdroid_org_version }}
+          zip -r fdroid-priv-magisk.v${SEMANTIC_VERSION}.zip -r -i META-INF system changelog.md module.prop customize.sh
+      
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "*.zip"
+          bodyFile: "changelog.md"
+          tag: "${{ github.event.inputs.semantic_version }}"
