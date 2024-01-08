@@ -39,19 +39,24 @@ jobs:
           VERSION_CODE=${{ github.event.inputs.package_version_code }}
           FDROID_ORG_VERSION=${{ github.event.inputs.fdroid_org_version }}
           
-          sed -i "s/VERSION_CODE/${VERSION_CODE}/g" module.prop
-          sed -i "s/SEMANTIC_VERSION/${SEMANTIC_VERSION}/g" module.prop
+          sed -i "s/VERSION_CODE/${INPUT_VERSION_CODE}/g" module.prop
+          sed -i "s/SEMANTIC_VERSION/${INPUT_SEMANTIC_VERSION}/g" module.prop
           
-          sed -i "s/VERSION_CODE/${VERSION_CODE}/g" update.json
-          sed -i "s/FDROID_ORG_VERSION/${FDROID_ORG_VERSION}/g" update.json
+          sed -i "s/VERSION_CODE/${INPUT_VERSION_CODE}/g" update.json
+          sed -i "s/FDROID_ORG_VERSION/${INPUT_FDROID_ORG_VERSION}/g" update.json
 
-          sed -i "s/VERSION_CODE/${VERSION_CODE}/g" changelog.md
-          sed -i "s/FDROID_ORG_VERSION/${FDROID_ORG_VERSION}/g" changelog.md
+          sed -i "s/VERSION_CODE/${INPUT_VERSION_CODE}/g" changelog.md
+          sed -i "s/FDROID_ORG_VERSION/${INPUT_FDROID_ORG_VERSION}/g" changelog.md
           
-          sed -i "s/SEMANTIC_VERSION/${SEMANTIC_VERSION}/g" customize.sh
-          sed -i "s/FDROID_ORG_VERSION/${FDROID_ORG_VERSION}/g" customize.sh
+          sed -i "s/SEMANTIC_VERSION/${INPUT_SEMANTIC_VERSION}/g" customize.sh
+          sed -i "s/FDROID_ORG_VERSION/${INPUT_FDROID_ORG_VERSION}/g" customize.sh
           
-      # Runs a set of commands using the runners shell
+      - name: Download release APK
+        run:
+          curl "https://f-droid.org/repo/org.fdroid.fdroid.privileged.ota_${INPUT_FDROID_ORG_VERSION}.zip" -o release.zip
+          unzip -d ./system/priv-app/F-DroidPrivilegedExtension release.zip F-DroidPrivilegedExtension.apk
+          unzip -d ./system/etc/permissions release.zip permissions_org.fdroid.fdroid.privileged.xml
+          
       - name: Create zip package
         run: |
           SEMANTIC_VERSION=${{ github.event.inputs.semantic_version }}
